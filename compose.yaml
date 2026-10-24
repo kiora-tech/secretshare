@@ -37,7 +37,7 @@ x-no-fpm-healthcheck: &no-fpm-healthcheck
 
 services:
   migrations:
-    image: registry.kiora.tech/kiora/secretshare_php:20261024-bd4b19e1191a@sha256:c7079b0c6b34e41fd0a461b20db183cb6b07e2a44eee5597f264276491d2a9ac
+    image: registry.kiora.tech/kiora/secretshare_php:20261024-dd10d993b09d@sha256:7ce378217e5e97098daf256fdaf319e4628dfb44d406e2882a5d7166a7837355
     command: ["php", "bin/console", "doctrine:migrations:migrate", "--no-interaction", "--allow-no-migration"]
     environment: *app-env
     networks: [secretshare]
@@ -50,7 +50,7 @@ services:
         max_attempts: 10
 
   php:
-    image: registry.kiora.tech/kiora/secretshare_php:20261024-bd4b19e1191a@sha256:c7079b0c6b34e41fd0a461b20db183cb6b07e2a44eee5597f264276491d2a9ac
+    image: registry.kiora.tech/kiora/secretshare_php:20261024-dd10d993b09d@sha256:7ce378217e5e97098daf256fdaf319e4628dfb44d406e2882a5d7166a7837355
     environment: *app-env
     networks: [secretshare]
     healthcheck:
@@ -68,7 +68,7 @@ services:
 
   # Efface les secrets expirés toutes les cinq minutes. Un seul exemplaire.
   scheduler:
-    image: registry.kiora.tech/kiora/secretshare_php:20261024-bd4b19e1191a@sha256:c7079b0c6b34e41fd0a461b20db183cb6b07e2a44eee5597f264276491d2a9ac
+    image: registry.kiora.tech/kiora/secretshare_php:20261024-dd10d993b09d@sha256:7ce378217e5e97098daf256fdaf319e4628dfb44d406e2882a5d7166a7837355
     command: ["sh", "-c", "while true; do php bin/console app:purge --no-interaction || true; sleep 300; done"]
     environment: *app-env
     networks: [secretshare]
@@ -81,7 +81,7 @@ services:
         delay: 10s
 
   nginx:
-    image: registry.kiora.tech/kiora/secretshare_nginx:20261024-bd4b19e1191a@sha256:940ddbd0ff4c4d0d0675d1787a6f7cc2b98e20e169c6f98556932e284e0e080b
+    image: registry.kiora.tech/kiora/secretshare_nginx:20261024-dd10d993b09d@sha256:24f5334dd54f3a6967ec0c652d0fb6d42e55d41d877ee56d80aa53075577fe1a
     networks: [secretshare]
     ports:
       - "${APP_PORT:-8115}:80"
