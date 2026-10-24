@@ -14,6 +14,8 @@
         <ini name="display_errors" value="1" />
         <ini name="error_reporting" value="-1" />
         <server name="APP_ENV" value="test" force="true" />
+        <!-- Petit plafond de stockage, plus fort que la valeur du conteneur de dev. -->
+        <env name="STORAGE_LIMIT_BYTES" value="1048576" force="true" />
         <server name="SHELL_VERBOSITY" value="-1" />
     </php>
 

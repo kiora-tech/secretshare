@@ -5,23 +5,17 @@
 {% block canonical %}{% endblock %}
 
 {% block body %}
-<section class="desk">
-    <div class="wrap">
-        <div class="folder">
-            <span class="tab"><b>●</b> Error {{ status_code }}</span>
-            <div class="folder__body">
-                {% if status_code == 404 %}
-                    <div class="sealed-head">
-                        <h1>Nothing filed here.</h1>
-                        <span class="stamp" aria-hidden="true">Not found</span>
-                    </div>
-                    <p>This page doesn't exist. If you followed a secret link, check that it was copied in full.</p>
-                {% else %}
-                    <h1>Something went wrong on our side.</h1>
-                    <p>Nothing you sent was lost or exposed: secrets are encrypted before they leave your browser. Please try again in a moment.</p>
-                {% endif %}
-                <a class="btn" href="{{ path('home') }}">Share a secret</a>
-            </div>
+<section class="page">
+    <div class="wrap narrow">
+        <div class="panel">
+            {% if status_code == 404 %}
+                <h1>This page doesn't exist.</h1>
+                <p>If you followed a secret link, check that it was copied in full, including the part after the <strong>#</strong>.</p>
+            {% else %}
+                <h1>Something went wrong on our side.</h1>
+                <p>Nothing you sent was lost or exposed: secrets are encrypted before they leave your browser. Please try again in a moment.</p>
+            {% endif %}
+            <a class="btn" href="{{ path('home') }}">Share a secret</a>
         </div>
     </div>
 </section>

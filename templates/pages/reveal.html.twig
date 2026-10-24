@@ -7,70 +7,63 @@
 {% block importmap %}{{ importmap(['app', 'pages/reveal'], {nonce: csp_nonce()}) }}{% endblock %}
 
 {% block body %}
-<section class="desk">
-    <div class="wrap">
-        <div class="folder rise">
-            <span class="tab"><b>●</b> Confidential</span>
-            <div class="folder__body">
-                {# État initial : la page ne demande rien au serveur avant le clic. #}
-                <div id="reveal-loading">
-                    <p class="label">Checking the link…</p>
-                </div>
+<section class="page">
+    <div class="wrap narrow">
+        <div class="panel">
+            {# État initial : la page ne demande rien au serveur, hors l'état du lien, avant le geste. #}
+            <div id="reveal-loading">
+                <p class="aside">Checking the link…</p>
+            </div>
 
-                <div id="reveal-ready" hidden>
-                    <div class="sealed-head">
-                        <h1>Someone shared a secret with you.</h1>
+            <div id="reveal-ready" hidden>
+                <h1>Someone shared a secret with you.</h1>
+                <p>It is encrypted end to end. Once you reveal it, it may be deleted: copy what you need right away.</p>
+                <dl class="meta-list">
+                    <dt>Views left</dt><dd id="reveal-views"></dd>
+                    <dt>Expires</dt><dd id="reveal-expires"></dd>
+                </dl>
+                <form id="reveal-form" novalidate>
+                    <div class="field" id="reveal-pass-field" hidden>
+                        <label class="label" for="reveal-pass">Passphrase</label>
+                        <input class="input" type="password" id="reveal-pass" autocomplete="off" spellcheck="false" placeholder="The sender gave it to you separately">
                     </div>
-                    <p class="desk__intro">It is encrypted end to end. Once you reveal it, it may be destroyed: copy what you need right away.</p>
-                    <dl class="meta-list">
-                        <dt>Views left</dt><dd id="reveal-views"></dd>
-                        <dt>Expires</dt><dd id="reveal-expires"></dd>
-                    </dl>
-                    <form id="reveal-form" novalidate>
-                        <div class="field" id="reveal-pass-field" hidden>
-                            <label class="label" for="reveal-pass">Passphrase</label>
-                            <input class="input" type="password" id="reveal-pass" autocomplete="off" spellcheck="false" placeholder="The sender gave it to you separately">
-                        </div>
-                        <p class="note note--error" id="reveal-error" role="alert" hidden></p>
-                        {# Maintenir, pas cliquer : les scanners de messagerie qui cliquent sur les boutons ne maintiennent pas. #}
-                        <button class="btn btn--block btn--stamp btn--hold" type="button" id="reveal-submit">
-                            <span class="btn__fill" aria-hidden="true"></span>
-                            <span class="btn__label">Press and hold to reveal</span>
-                        </button>
-                        <p class="field__hint" id="reveal-hint">Hold for one second. Bots click; people hold. That's how email scanners are kept from using up your view.</p>
-                    </form>
-                </div>
+                    <p class="note note--error" id="reveal-error" role="alert" hidden></p>
+                    {# Maintenir, pas cliquer : les scanners de messagerie qui cliquent sur les boutons ne maintiennent pas. #}
+                    <button class="btn btn--block btn--hold" type="button" id="reveal-submit">
+                        <span class="btn__fill" aria-hidden="true"></span>
+                        <span class="btn__label">Press and hold to reveal</span>
+                    </button>
+                    <p class="hint" id="reveal-hint">Hold for one second. Email scanners click buttons but don't hold them, so they can't use up your view.</p>
+                </form>
+            </div>
 
-                <div id="reveal-open" hidden>
-                    <div class="sealed-head">
-                        <h1>Here is your secret.</h1>
-                        <span class="stamp stamp--land" id="reveal-stamp" hidden aria-hidden="true">Destroyed</span>
-                    </div>
-                    <div class="redacted" id="reveal-box">
-                        <div class="redacted__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-                        <div class="redacted__text" id="reveal-text"></div>
-                    </div>
-                    <div id="reveal-copy-row">
-                        <input id="reveal-copy-source" type="text" readonly tabindex="-1" aria-hidden="true" class="sr-only">
-                        <button class="btn btn--small" type="button" data-copy="reveal-copy-source">Copy the secret</button>
-                    </div>
-                    <ul class="files" id="reveal-files" hidden></ul>
-                    <p class="note note--warn" id="reveal-after"></p>
+            <div id="reveal-open" hidden>
+                <h1>Here is your secret.</h1>
+                {# À la dernière lecture : la flamme brûle et s'éteint, le secret n'existe plus chez nous. #}
+                <div class="burnt" id="reveal-status" hidden>
+                    {% include 'partials/flame.html.twig' with {variant: 'bare', size: 34} %}
+                    <p class="status status--done">Deleted from our servers</p>
                 </div>
+                <div class="secret-box" id="reveal-box">
+                    <div class="secret" id="reveal-text"></div>
+                </div>
+                <div class="copy-row" id="reveal-copy-row">
+                    <input id="reveal-copy-source" type="text" readonly tabindex="-1" aria-hidden="true" class="sr-only">
+                    <button class="btn btn--secondary btn--small" type="button" data-copy="reveal-copy-source">Copy the secret</button>
+                </div>
+                <ul class="files" id="reveal-files" hidden></ul>
+                <p class="note note--warn" id="reveal-after"></p>
+            </div>
 
-                <div id="reveal-gone" hidden>
-                    <div class="sealed-head">
-                        <h1>This secret is gone.</h1>
-                        <span class="stamp stamp--land" aria-hidden="true">Destroyed</span>
-                    </div>
-                    <p>It was already opened, it expired, or the sender burned it. Once a secret is gone, nothing of it is left, so we can't tell which.</p>
-                    <p class="note"><strong>Didn't open it yourself?</strong> Ask the sender for a new link. Their private tracking link shows exactly when this one was opened, so you can both see what happened.</p>
-                </div>
+            <div id="reveal-gone" hidden>
+                <h1>This secret is gone.</h1>
+                <p>It was already opened, it expired, or the sender burned it. Once a secret is gone, nothing of it is left, so we can't tell which.</p>
+                <p class="note"><strong>Didn't open it yourself?</strong> Ask the sender for a new link. Their private tracking link shows exactly when this one was opened, so you can both see what happened.</p>
+            </div>
 
-                <div id="reveal-broken" hidden>
-                    <h1>This link is incomplete.</h1>
-                    <p>The key is the part after the <strong>#</strong>, and it is missing or damaged. Some apps cut long links: ask the sender to copy the whole link again.</p>
-                </div>
+            <div id="reveal-broken" hidden>
+                <h1>This link is incomplete.</h1>
+                <p>The key is the part after the <strong>#</strong>, and it is missing or damaged. Some apps cut long links: ask the sender to copy the whole link again.</p>
             </div>
         </div>
     </div>

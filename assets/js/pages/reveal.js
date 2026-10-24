@@ -102,7 +102,7 @@ async function reveal() {
         el('#reveal-copy-source').value = text;
         show(el('#reveal-copy-row'), text.length > 0);
         renderDownloads(el('#reveal-files'), files);
-        show(el('#reveal-stamp'), data.viewsLeft === 0);
+        show(el('#reveal-status'), data.viewsLeft === 0);
         el('#reveal-after').textContent = data.viewsLeft === 0
             ? 'This secret has now been deleted from our servers. Copy it before you leave this page: it cannot be shown again.'
             : `It can be viewed ${views(data.viewsLeft)} more. Copy it now all the same.`;

@@ -6,39 +6,34 @@
 {% block importmap %}{{ importmap(['app', 'pages/manage'], {nonce: csp_nonce()}) }}{% endblock %}
 
 {% block body %}
-<section class="desk">
-    <div class="wrap">
-        <div class="folder rise">
-            <span class="tab"><b>●</b> Tracking</span>
-            <div class="folder__body">
-                <div id="manage-loading"><p class="label">Checking…</p></div>
+<section class="page">
+    <div class="wrap narrow">
+        <div class="panel">
+            <div id="manage-loading"><p class="aside">Checking…</p></div>
 
-                <div id="manage-found" hidden>
-                    <div class="sealed-head">
-                        <h1 id="manage-title"></h1>
-                        <span class="stamp" id="manage-stamp" hidden aria-hidden="true"></span>
-                    </div>
-                    <dl class="meta-list">
-                        <dt>Views</dt><dd id="manage-views"></dd>
-                        <dt>Read at</dt><dd id="manage-read"></dd>
-                        <dt>Created</dt><dd id="manage-created"></dd>
-                        <dt>Expires</dt><dd id="manage-expires"></dd>
-                    </dl>
-                    <p class="note note--error" id="manage-error" role="alert" hidden></p>
-                    <div id="manage-actions">
-                        <button class="btn btn--block btn--stamp btn--hold" type="button" id="manage-burn">
-                            <span class="btn__fill" aria-hidden="true"></span>
-                            <span class="btn__label">Press and hold to burn it now</span>
-                        </button>
-                        <p class="field__hint" id="manage-burn-hint">Hold for one second. Burning deletes the encrypted secret right away. The link stops working.</p>
-                    </div>
-                    <button class="btn btn--ghost btn--block" type="button" id="manage-refresh">Refresh</button>
+            <div id="manage-found" hidden>
+                <h1 id="manage-title"></h1>
+                <p class="status status--done" id="manage-status" hidden></p>
+                <dl class="meta-list">
+                    <dt>Views</dt><dd id="manage-views"></dd>
+                    <dt>Read at</dt><dd id="manage-read"></dd>
+                    <dt>Created</dt><dd id="manage-created"></dd>
+                    <dt>Expires</dt><dd id="manage-expires"></dd>
+                </dl>
+                <p class="note note--error" id="manage-error" role="alert" hidden></p>
+                <div class="field" id="manage-actions">
+                    <button class="btn btn--block btn--danger btn--hold" type="button" id="manage-burn">
+                        <span class="btn__fill" aria-hidden="true"></span>
+                        <span class="btn__label">Press and hold to burn it now</span>
+                    </button>
+                    <p class="hint" id="manage-burn-hint">Hold for one second. Burning deletes the encrypted secret right away, and the link stops working.</p>
                 </div>
+                <button class="btn btn--secondary btn--block" type="button" id="manage-refresh">Refresh</button>
+            </div>
 
-                <div id="manage-missing" hidden>
-                    <h1>Nothing to track here.</h1>
-                    <p>Either the secret expired and its record was erased, or this tracking link is incomplete. A tracking link only works with the part after the <strong>#</strong>.</p>
-                </div>
+            <div id="manage-missing" hidden>
+                <h1>Nothing to track here.</h1>
+                <p>Either the secret expired and its record was erased, or this tracking link is incomplete. A tracking link only works with the part after the <strong>#</strong>.</p>
             </div>
         </div>
     </div>

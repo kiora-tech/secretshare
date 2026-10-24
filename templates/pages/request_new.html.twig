@@ -5,58 +5,48 @@
 {% block importmap %}{{ importmap(['app', 'pages/request-new'], {nonce: csp_nonce()}) }}{% endblock %}
 
 {% block body %}
-<section class="desk">
-    <div class="wrap">
-        <p class="kicker rise"><span>Request a secret</span><span>Post-quantum</span><span>No account</span></p>
+<section class="page">
+    <div class="wrap narrow">
+        <h1>Ask someone for a password or a secret.</h1>
+        <p class="lede">They get a link, type the secret, and their browser encrypts it to a key that only you hold. No more passwords in email threads. Free, no account.</p>
 
-        <form class="folder rise rise--2" id="request-form" novalidate>
-            <span class="tab"><b>●</b> New request</span>
-            <div class="folder__body">
-                <h1>Ask someone for a secret.</h1>
-                <p>They get a link, type the secret, and their browser encrypts it to a key only you hold. No more passwords in email threads.</p>
-                <div class="field">
-                    <label class="label" for="request-note">What do you need?</label>
-                    <textarea class="paper-input" id="request-note" rows="3" maxlength="1000" placeholder="e.g. The admin password for the office Wi-Fi router"></textarea>
-                    <p class="field__hint">Shown to them, encrypted like the rest. Optional.</p>
-                </div>
-                <fieldset class="field">
-                    <legend class="label">Request expires after</legend>
-                    <div class="segmented">
-                        <label><input type="radio" name="ttl" value="3600">1 hour</label>
-                        <label><input type="radio" name="ttl" value="86400">1 day</label>
-                        <label><input type="radio" name="ttl" value="604800" checked>7 days</label>
-                        <label><input type="radio" name="ttl" value="2592000">30 days</label>
-                    </div>
-                </fieldset>
-                <p class="note note--error" id="request-error" role="alert" hidden></p>
-                <button class="btn btn--block" type="submit" id="request-submit">Create request</button>
+        <form class="panel" id="request-form" novalidate>
+            <div class="field">
+                <label class="label" for="request-note">What do you need?</label>
+                <textarea class="input" id="request-note" rows="3" maxlength="1000" placeholder="e.g. The admin password for the office Wi-Fi router"></textarea>
+                <p class="hint">Shown to them, encrypted like the rest. Optional.</p>
             </div>
+            <fieldset class="field">
+                <legend class="label">Request expires after</legend>
+                <div class="segmented">
+                    <label><input type="radio" name="ttl" value="3600">1 hour</label>
+                    <label><input type="radio" name="ttl" value="86400">1 day</label>
+                    <label><input type="radio" name="ttl" value="604800" checked>7 days</label>
+                    <label><input type="radio" name="ttl" value="2592000">30 days</label>
+                </div>
+            </fieldset>
+            <p class="note note--error" id="request-error" role="alert" hidden></p>
+            <button class="btn btn--block" type="submit" id="request-submit">Create request</button>
         </form>
 
-        <section class="folder" id="request-result" hidden aria-live="polite">
-            <span class="tab"><b>●</b> Request ready</span>
-            <div class="folder__body">
-                <div class="sealed-head">
-                    <h2>Your request is ready.</h2>
-                    <span class="stamp stamp--land" aria-hidden="true">Open</span>
+        <section class="panel" id="request-result" hidden aria-live="polite">
+            <h2>Your request is ready.</h2>
+            <div class="field">
+                <label class="label" for="request-link">1. Send this link to them</label>
+                <div class="linkbox">
+                    <input class="input" id="request-link" type="text" readonly>
+                    <button class="btn btn--secondary" type="button" data-copy="request-link">Copy</button>
                 </div>
-                <div class="field">
-                    <label class="label" for="request-link">1 · Send this link to them</label>
-                    <div class="linkbox">
-                        <input id="request-link" type="text" readonly>
-                        <button type="button" data-copy="request-link">Copy</button>
-                    </div>
-                </div>
-                <div class="field">
-                    <label class="label" for="inbox-link">2 · Keep this link: your private inbox</label>
-                    <div class="linkbox">
-                        <input id="inbox-link" type="text" readonly>
-                        <button type="button" data-copy="inbox-link">Copy</button>
-                    </div>
-                    <p class="note note--warn"><strong>Save it now (bookmark it, or put it in your password manager).</strong> It holds your private key, and it is the only way to open the answer. We can't recover it for you.</p>
-                </div>
-                <a class="btn btn--ghost btn--block" id="inbox-open" href="#">Open my inbox</a>
             </div>
+            <div class="field">
+                <label class="label" for="inbox-link">2. Keep this link: your private inbox</label>
+                <div class="linkbox">
+                    <input class="input" id="inbox-link" type="text" readonly>
+                    <button class="btn btn--secondary" type="button" data-copy="inbox-link">Copy</button>
+                </div>
+            </div>
+            <p class="note note--warn"><strong>Save it now: bookmark it, or put it in your password manager.</strong> It holds your private key, and it is the only way to open the answer. We can't recover it for you.</p>
+            <a class="btn btn--secondary btn--block" id="inbox-open" href="#">Open my inbox</a>
         </section>
     </div>
 </section>

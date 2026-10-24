@@ -1,0 +1,16 @@
+{#
+    La flamme de secretshare. Elle vacille, s'éteint, et laisse une mèche qui fume : un secret
+    lu une fois, puis détruit. Toute l'animation est dans app.css (la CSP refuse les styles en
+    ligne). Variantes : « tile », l'icône sur carré menthe ; « bare », la flamme seule.
+#}
+{% set variant = variant|default('tile') %}
+{% set size = size|default(64) %}
+<svg class="flame flame--{{ variant }}" viewBox="0 0 64 64" width="{{ size }}" height="{{ size }}" aria-hidden="true" focusable="false">
+    {% if variant == 'tile' %}<rect class="flame__tile" width="64" height="64" rx="15"/>{% endif %}
+    <path class="flame__smoke" d="M32 44c-3-4 3-7 0-11s3-7 0-11" pathLength="1"/>
+    <rect class="flame__wick" x="30.5" y="44" width="3" height="9" rx="1.5"/>
+    <g class="flame__fire">
+        <path class="flame__outer" d="M33 9c3 9 14 15 14 28a15 15 0 0 1-30 0c0-7 3-12 7-16 0 6 3 9 6 10-2-8-1-15 3-22z"/>
+        <path class="flame__inner" d="M32 52a7 7 0 0 1-7-7c0-4 3-7 5-9 0 3 2 5 4 5 1-2 1-4 0-6 3 2 5 6 5 10a7 7 0 0 1-7 7z"/>
+    </g>
+</svg>

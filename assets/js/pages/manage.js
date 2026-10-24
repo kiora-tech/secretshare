@@ -12,10 +12,10 @@ const panels = ['loading', 'found', 'missing'];
 const display = (name) => panels.forEach((p) => show(el(`#manage-${p}`), p === name));
 
 const STATES = {
-    active: { title: 'Waiting to be read.', stamp: null },
-    consumed: { title: 'Read, then destroyed.', stamp: 'Destroyed' },
-    expired: { title: 'Expired unread.', stamp: 'Expired' },
-    burned: { title: 'Burned.', stamp: 'Burned' },
+    active: { title: 'Waiting to be read.', badge: null },
+    consumed: { title: 'Read, then destroyed.', badge: 'Destroyed' },
+    expired: { title: 'Expired unread.', badge: 'Expired' },
+    burned: { title: 'Burned.', badge: 'Burned' },
 };
 
 async function load() {
@@ -38,9 +38,9 @@ async function load() {
     el('#manage-title').textContent = data.state === 'burned' && data.burnReason === 'attempts'
         ? 'Destroyed after too many wrong passphrases.'
         : (data.state === 'active' && data.views > 0 ? 'Read, still available.' : state.title);
-    const stamp = el('#manage-stamp');
-    stamp.textContent = state.stamp ?? '';
-    show(stamp, Boolean(state.stamp));
+    const badge = el('#manage-status');
+    badge.textContent = state.badge ?? '';
+    show(badge, Boolean(state.badge));
     el('#manage-views').textContent = `${data.views} of ${data.maxViews}`;
     el('#manage-read').textContent = data.viewedAt.length ? data.viewedAt.map(formatDate).join(', ') : 'Not yet';
     el('#manage-created').textContent = formatDate(data.createdAt);
