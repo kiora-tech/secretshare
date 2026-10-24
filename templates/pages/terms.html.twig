@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Terms of use and legal notice · secretshare{% endblock %}
+{% block description %}The rules for using secretshare, and who publishes it.{% endblock %}
+
+{% block body %}
+<article class="wrap prose">
+    <p class="kicker"><span>Terms</span><span>Last updated October 23, 2026</span></p>
+    <h1>Terms of use.</h1>
+
+    <h2>The service</h2>
+    <p>secretshare lets you send and request secrets through links that expire. It is free and requires no account. We may change or stop the service; existing links keep working until they expire unless the service has to stop.</p>
+
+    <h2>Your responsibilities</h2>
+    <p>You may only share content that you are allowed to share. Do not use secretshare to send malware, to phish, to harass, or for anything unlawful. Because secrets are encrypted in your browser, we can't see what is shared; if a link is reported to us for abuse, we can destroy it.</p>
+    <p>Keep links and passphrases safe. Anyone who has a complete link can open the secret, and we can't recover a lost link or key.</p>
+
+    <h2>No warranty</h2>
+    <p>The service is provided as is. We do our best to keep it available and secure, but we can't guarantee that it will always be available, or that a secret will be delivered before it expires. Don't rely on secretshare as the only copy of anything. To the extent permitted by law, Kiora's liability is limited to direct damage caused by its own fault.</p>
+
+    <h2>Law</h2>
+    <p>These terms are governed by French law. If you use the service as a consumer, you keep the protection of the mandatory rules of your country of residence.</p>
+
+    <h2 id="contact">Legal notice and contact</h2>
+    <table>
+        <tr><th>Publisher</th><td>KIORA, SARL with a share capital of €1,000, 58 avenue des Bergères, 92800 Puteaux, France</td></tr>
+        <tr><th>Registration</th><td>RCS Nanterre 850 361 999 · VAT FR74 850 361 999</td></tr>
+        <tr><th>Publication director</th><td>Stéphane Rathgeber</td></tr>
+        <tr><th>Hosting</th><td>KIORA, on its own servers in France (address above)</td></tr>
+        <tr><th>Contact</th><td><a href="mailto:contact@secretshare.co">contact@secretshare.co</a></td></tr>
+    </table>
+</article>
+{% endblock %}

@@ -1,0 +1,65 @@
+# Développement local, fusionné automatiquement avec compose.yaml par `docker compose`.
+# Swarm ne lit jamais ce fichier.
+
+x-dev-env: &dev-env
+  APP_ENV: dev
+  APP_SECRET: dev_secret_for_local_use_only_0123456789
+  DEFAULT_URI: http://localhost:18108
+  DATABASE_URL: postgresql://secretshare:secretshare@postgres:5432/secretshare?serverVersion=16&charset=utf8
+  TRUSTED_PROXIES: private_ranges
+  PLAUSIBLE_DOMAIN: ""
+
+services:
+  migrations:
+    build: { context: ., dockerfile: docker/php/Dockerfile, target: dev }
+    image: secretshare_php:dev
+    environment: *dev-env
+    volumes: [".:/var/www/html"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  php:
+    build: { context: ., dockerfile: docker/php/Dockerfile, target: dev }
+    image: secretshare_php:dev
+    container_name: secretshare_php
+    environment: *dev-env
+    volumes:
+      - .:/var/www/html
+      - ./docker/php/php.dev.ini:/usr/local/etc/php/conf.d/zz-dev.ini:ro
+    deploy: { replicas: 1 }
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  # Neutralisé : lancer `make sf c=app:purge` à la main.
+  scheduler:
+    build: { context: ., dockerfile: docker/php/Dockerfile, target: dev }
+    image: secretshare_php:dev
+    command: ["sleep", "infinity"]
+    environment: *dev-env
+
+  nginx:
+    build: { context: ., dockerfile: docker/nginx/Dockerfile, target: dev }
+    image: secretshare_nginx:dev
+    ports: !override
+      - "18108:80"
+    volumes: [".:/var/www/html:cached"]
+    deploy: { replicas: 1 }
+    depends_on: [php]
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: secretshare_postgres
+    networks: [secretshare]
+    environment:
+      POSTGRES_DB: secretshare
+      POSTGRES_USER: secretshare
+      POSTGRES_PASSWORD: secretshare
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U secretshare"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

@@ -1,0 +1,16 @@
+.git
+.github
+.idea
+research
+tests
+var
+node_modules
+compose.yaml
+compose.override.yaml
+.env.local
+.env.dev
+.env.test
+.env.*.local
+.phpunit.cache
+.php-cs-fixer.cache
+*.md

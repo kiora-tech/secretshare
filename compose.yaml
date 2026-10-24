@@ -1,0 +1,101 @@
+# Déploiement de production (Docker Swarm, stack Portainer qui suit ce dépôt).
+# Le développement local est dans compose.override.yaml, que Compose fusionne ici ;
+# Swarm ne lit QUE ce fichier.
+#
+# Les images sont épinglées par tag et par empreinte (digest) : Swarm exécute exactement
+# l'image construite, même si un tag était réécrit dans le registre. .github/workflows/deploy.yml
+# met ces lignes à jour et recommite ce fichier ; Portainer suit le dépôt et redéploie la stack.
+#
+# PostgreSQL est un cluster extérieur à la stack : aucun volume ici, les conteneurs sont
+# interchangeables. Les valeurs viennent des variables de la stack Portainer.
+#
+# Routage : le proxy frontal termine le TLS (secretshare.co + www) et transmet au port publié
+# ci-dessous sur l'ingress Swarm.
+
+x-app-env: &app-env
+  APP_ENV: prod
+  # 32 octets au moins : l'application refuse de compter les appels sous une clé plus courte.
+  APP_SECRET: ${APP_SECRET}
+  DEFAULT_URI: ${DEFAULT_URI:-https://secretshare.co}
+  DATABASE_URL: ${DATABASE_URL}
+  # L'ingress et les réseaux overlay de Swarm sont en 10.0.0.0/8 : seuls ces sauts sont crus.
+  TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.1,10.0.0.0/8}
+  # Volume maximal de chiffré stocké (secrets et réponses) : 20 Gio.
+  STORAGE_LIMIT_BYTES: ${STORAGE_LIMIT_BYTES:-21474836480}
+  PLAUSIBLE_URL: ${PLAUSIBLE_URL:-https://plausible.kiora.tech}
+  PLAUSIBLE_DOMAIN: ${PLAUSIBLE_DOMAIN:-secretshare.co}
+
+# Nœuds web seulement : un service placé ailleurs serait injoignable derrière le proxy frontal.
+x-placement: &placement
+  constraints:
+    - node.labels.domain == chassis-web
+
+# Le HEALTHCHECK php-fpm de l'image ne vaut que pour le service php : les migrations et la
+# purge lancent une commande console, et Swarm les tuerait comme « unhealthy ».
+x-no-fpm-healthcheck: &no-fpm-healthcheck
+  disable: true
+
+services:
+  migrations:
+    image: registry.kiora.tech/kiora/secretshare_php:20261024-bd4b19e1191a@sha256:c7079b0c6b34e41fd0a461b20db183cb6b07e2a44eee5597f264276491d2a9ac
+    command: ["php", "bin/console", "doctrine:migrations:migrate", "--no-interaction", "--allow-no-migration"]
+    environment: *app-env
+    networks: [secretshare]
+    healthcheck: *no-fpm-healthcheck
+    deploy:
+      placement: *placement
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 10
+
+  php:
+    image: registry.kiora.tech/kiora/secretshare_php:20261024-bd4b19e1191a@sha256:c7079b0c6b34e41fd0a461b20db183cb6b07e2a44eee5597f264276491d2a9ac
+    environment: *app-env
+    networks: [secretshare]
+    healthcheck:
+      # La page d'état a son propre pool sur 127.0.0.1:9001 (docker/php/www.conf).
+      test: ["CMD", "env", "FCGI_CONNECT=localhost:9001", "php-fpm-healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      placement: *placement
+      replicas: 2
+      update_config:
+        order: start-first
+
+  # Efface les secrets expirés toutes les cinq minutes. Un seul exemplaire.
+  scheduler:
+    image: registry.kiora.tech/kiora/secretshare_php:20261024-bd4b19e1191a@sha256:c7079b0c6b34e41fd0a461b20db183cb6b07e2a44eee5597f264276491d2a9ac
+    command: ["sh", "-c", "while true; do php bin/console app:purge --no-interaction || true; sleep 300; done"]
+    environment: *app-env
+    networks: [secretshare]
+    healthcheck: *no-fpm-healthcheck
+    deploy:
+      placement: *placement
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
+
+  nginx:
+    image: registry.kiora.tech/kiora/secretshare_nginx:20261024-bd4b19e1191a@sha256:940ddbd0ff4c4d0d0675d1787a6f7cc2b98e20e169c6f98556932e284e0e080b
+    networks: [secretshare]
+    ports:
+      - "${APP_PORT:-8115}:80"
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      placement: *placement
+      replicas: 2
+      update_config:
+        order: start-first
+
+networks:
+  secretshare:

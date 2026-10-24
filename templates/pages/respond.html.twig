@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Someone requested a secret from you · secretshare{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block canonical %}{% endblock %}
+{% block importmap %}{{ importmap(['app', 'pages/respond'], {nonce: csp_nonce()}) }}{% endblock %}
+
+{% block body %}
+<section class="desk">
+    <div class="wrap">
+        <div class="folder rise">
+            <span class="tab"><b>●</b> Request</span>
+            <div class="folder__body">
+                <div id="respond-loading"><p class="label">Opening the request…</p></div>
+
+                <form id="respond-form" novalidate hidden>
+                    <h1>Someone is asking you for a secret.</h1>
+                    <blockquote class="note" id="respond-note" hidden></blockquote>
+                    <p>What you type is encrypted in your browser to their key. We can't read it, and only they can open it, once.</p>
+                    <div class="field">
+                        <label class="label" for="respond-text">Your answer</label>
+                        <textarea class="paper-input" id="respond-text" rows="5" maxlength="100000" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Type or paste the secret…"></textarea>
+                    </div>
+                    <div class="field">
+                        <label class="dropzone" id="respond-dropzone">
+                            <span class="dropzone__icon" aria-hidden="true">📎</span>
+                            <span><strong>Attach files</strong> (up to 10 MB in total)</span>
+                            <input type="file" id="respond-files" multiple>
+                        </label>
+                        <ul class="files" id="respond-file-list" hidden></ul>
+                    </div>
+                    <p class="note note--error" id="respond-error" role="alert" hidden></p>
+                    <button class="btn btn--block" type="submit" id="respond-submit">Encrypt &amp; send</button>
+                </form>
+
+                <div id="respond-sent" hidden>
+                    <div class="sealed-head">
+                        <h1>Sent, sealed.</h1>
+                        <span class="stamp stamp--ok stamp--land" aria-hidden="true">Delivered</span>
+                    </div>
+                    <p>Only the person who asked can open it, and only once. You can close this page.</p>
+                    <p class="note">Need to send a secret to someone yourself? <a href="{{ path('home') }}">Share a secret →</a></p>
+                </div>
+
+                <div id="respond-gone" hidden>
+                    <h1>This request is closed.</h1>
+                    <p>It was already answered, it expired, or it was cancelled. Ask the person for a new request link.</p>
+                </div>
+
+                <div id="respond-broken" hidden>
+                    <h1>Don't send anything through this link.</h1>
+                    <p>The request could not be verified: the link is incomplete, or the request was altered. The part after the <strong>#</strong> must be intact. Ask the person to send the link again.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

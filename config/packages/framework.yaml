@@ -1,0 +1,56 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+    secret: '%env(APP_SECRET)%'
+
+    # Aucun cookie : le site n'a ni compte ni session.
+    session: false
+
+    # NPM puis le nginx de la stack : l'adresse du visiteur arrive par X-Forwarded-For.
+    # Elle ne sert qu'aux limites de débit, et n'est jamais écrite en base. X-Forwarded-Host
+    # n'est pas cru : NPM transmet l'en-tête Host d'origine, et un hôte venu du client ne doit
+    # pas finir dans une redirection.
+    trusted_proxies: '%env(TRUSTED_PROXIES)%'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-proto']
+
+    # Le composant Lock doit être actif pour que les limiteurs prennent un verrou ; le leur est
+    # app.rate_limiter.lock_factory (config/services.yaml), celui-ci ne sert à rien d'autre.
+    lock: 'in-memory'
+
+    rate_limiter:
+        # Création de secrets et de demandes, par adresse IP.
+        create:
+            policy: sliding_window
+            limit: 30
+            interval: '10 minutes'
+            lock_factory: app.rate_limiter.lock_factory
+        # Lectures et ouvertures, par adresse IP : chaque essai de phrase de passe en est une.
+        read:
+            policy: sliding_window
+            limit: 60
+            interval: '1 minute'
+            lock_factory: app.rate_limiter.lock_factory
+        # Volume envoyé, par tranches de 64 Kio : 100 Mio par heure et par adresse.
+        upload:
+            policy: sliding_window
+            limit: 1600
+            interval: '1 hour'
+            lock_factory: app.rate_limiter.lock_factory
+        # Statistiques relayées à Plausible.
+        event:
+            policy: sliding_window
+            limit: 120
+            interval: '1 minute'
+            lock_factory: app.rate_limiter.lock_factory
+
+when@test:
+    framework:
+        test: true
+        rate_limiter:
+            create:
+                policy: no_limit
+            read:
+                policy: no_limit
+            upload:
+                policy: no_limit
+            event:
+                policy: no_limit

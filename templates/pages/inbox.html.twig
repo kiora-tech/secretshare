@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Your secret inbox · secretshare{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block canonical %}{% endblock %}
+{% block importmap %}{{ importmap(['app', 'pages/inbox'], {nonce: csp_nonce()}) }}{% endblock %}
+
+{% block body %}
+<section class="desk">
+    <div class="wrap">
+        <div class="folder rise">
+            <span class="tab"><b>●</b> Private inbox</span>
+            <div class="folder__body">
+                <div id="inbox-loading"><p class="label">Opening your inbox…</p></div>
+
+                <div id="inbox-pending" hidden>
+                    <div class="sealed-head">
+                        <h1>No answer yet.</h1>
+                        <span class="stamp" aria-hidden="true">Waiting</span>
+                    </div>
+                    <p>Your request is open until <strong id="inbox-expires"></strong>. Come back to this link later: it is the only way to open the answer.</p>
+                    <p class="note note--error" id="inbox-error" role="alert" hidden></p>
+                    <button class="btn btn--block" type="button" id="inbox-refresh">Check again</button>
+                    <button class="btn btn--ghost btn--block btn--hold" type="button" id="inbox-cancel">
+                        <span class="btn__fill" aria-hidden="true"></span>
+                        <span class="btn__label">Press and hold to cancel this request</span>
+                    </button>
+                    <p class="field__hint" id="inbox-cancel-hint">Hold for one second. Cancelling erases the request: the link you sent stops working.</p>
+                </div>
+
+                <div id="inbox-ready" hidden>
+                    <div class="sealed-head">
+                        <h1>Your answer is here.</h1>
+                    </div>
+                    <p class="desk__intro">It can be opened once. Then it is erased from our servers: copy what you need right away.</p>
+                    <p class="note note--error" id="inbox-ready-error" role="alert" hidden></p>
+                    {# Maintenir, pas cliquer : les scanners de messagerie qui cliquent sur les boutons ne maintiennent pas. #}
+                    <button class="btn btn--block btn--stamp btn--hold" type="button" id="inbox-submit">
+                        <span class="btn__fill" aria-hidden="true"></span>
+                        <span class="btn__label">Press and hold to open</span>
+                    </button>
+                    <p class="field__hint" id="inbox-hint">Hold for one second. Bots click; people hold. That's how email scanners are kept from using up your answer.</p>
+                </div>
+
+                <div id="inbox-open" hidden>
+                    <div class="sealed-head">
+                        <h1>Their answer.</h1>
+                        <span class="stamp stamp--land" aria-hidden="true">Destroyed</span>
+                    </div>
+                    <div class="redacted" id="inbox-box">
+                        <div class="redacted__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+                        <div class="redacted__text" id="inbox-text"></div>
+                    </div>
+                    <div id="inbox-copy-row">
+                        <input id="inbox-copy-source" type="text" readonly tabindex="-1" aria-hidden="true" class="sr-only">
+                        <button class="btn btn--small" type="button" data-copy="inbox-copy-source">Copy the secret</button>
+                    </div>
+                    <ul class="files" id="inbox-files" hidden></ul>
+                    <p class="note note--warn">The answer has been deleted from our servers. Copy it before you leave this page: it cannot be shown again.</p>
+                </div>
+
+                <div id="inbox-gone" hidden>
+                    <h1>This inbox is empty.</h1>
+                    <p>The answer was already opened, the request expired or was cancelled, or this link is incomplete (the part after the <strong>#</strong> must be intact).</p>
+                    <a class="btn btn--ghost" href="{{ path('request_new') }}">Create a new request</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,16 @@
+framework:
+    cache:
+        prefix_seed: kiora/secretshare
+        pools:
+            # Les compteurs des limites de débit vivent dans Postgres : php tourne en deux
+            # exemplaires, et un cache fichier par conteneur doublerait chaque limite.
+            # Table cache_items, créée par la migration initiale.
+            cache.rate_limiter:
+                adapter: cache.adapter.doctrine_dbal
+
+when@test:
+    framework:
+        cache:
+            pools:
+                cache.rate_limiter:
+                    adapter: cache.adapter.array

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}secretshare: share a secret, read once, then gone{% endblock %}</title>
+    <meta name="description" content="{% block description %}Send passwords, API keys, notes and files as a link that self-destructs after reading. Encrypted in your browser, free, no account.{% endblock %}">
+    {% block robots %}{% endblock %}
+    <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#efe8da">
+    <meta name="color-scheme" content="light">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    {% block canonical %}<link rel="canonical" href="https://secretshare.co{{ app.request.pathInfo }}">{% endblock %}
+    <meta property="og:site_name" content="secretshare">
+    <meta property="og:title" content="{{ block('title') }}">
+    <meta property="og:description" content="{{ block('description') }}">
+    <meta property="og:type" content="website">
+    <link rel="preload" href="{{ asset('fonts/newsreader-latin-opsz-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ asset('fonts/courier-prime-latin-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
+    {% block importmap %}{{ importmap('app', {nonce: csp_nonce()}) }}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <a class="skip" href="#main">Skip to content</a>
+    {% include 'partials/masthead.html.twig' %}
+    <main id="main">
+        {% block body %}{% endblock %}
+    </main>
+    {% include 'partials/colophon.html.twig' %}
+</body>
+</html>

@@ -1,0 +1,253 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}secretshare: share a password or secret with a link that self-destructs{% endblock %}
+{% block importmap %}{{ importmap(['app', 'pages/create'], {nonce: csp_nonce()}) }}{% endblock %}
+
+{% block body %}
+<section class="hero">
+    <div class="wrap">
+        <div>
+            <p class="kicker rise"><span>Free</span><span>No account</span><span>End-to-end encrypted</span></p>
+            <h1 class="hero__title rise rise--2">Share a secret. <em>Read once, then gone.</em></h1>
+            <p class="hero__lede rise rise--3">Passwords, API keys, private notes and files travel as a link that destroys itself after reading. Everything is encrypted in your browser: we never see what you share, and we never see the key.</p>
+            <ul class="assurances rise rise--3">
+                <li>Encrypted in your browser with AES-256-GCM</li>
+                <li>The key stays in the link and never reaches us</li>
+                <li>Burned after reading: nothing left on our servers</li>
+                <li>No account, no ads, no cookies</li>
+            </ul>
+        </div>
+
+        <div>
+            {# Formulaire : chiffré dans le navigateur par pages/create.js. Sans JavaScript, rien ne part. #}
+            <form class="folder" id="create-form" novalidate>
+                <span class="tab"><b>●</b> New secret</span>
+                <div class="folder__body">
+                    <div class="field">
+                        <label class="label" for="secret-text">Your secret</label>
+                        <textarea class="paper-input" id="secret-text" name="text" rows="5" maxlength="100000" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Paste a password, an API key, a private note…"></textarea>
+                    </div>
+
+                    <div class="field">
+                        <label class="dropzone" id="dropzone">
+                            <span class="dropzone__icon" aria-hidden="true">📎</span>
+                            <span><strong>Attach files</strong> (up to 10 MB in total, encrypted too)</span>
+                            <input type="file" id="secret-files" multiple>
+                        </label>
+                        <ul class="files" id="file-list" hidden></ul>
+                    </div>
+
+                    <div class="options">
+                        <fieldset class="field">
+                            <legend class="label">Expires after</legend>
+                            <div class="segmented">
+                                <label><input type="radio" name="ttl" value="3600">1 hour</label>
+                                <label><input type="radio" name="ttl" value="86400">1 day</label>
+                                <label><input type="radio" name="ttl" value="604800" checked>7 days</label>
+                                <label><input type="radio" name="ttl" value="2592000">30 days</label>
+                            </div>
+                        </fieldset>
+                        <div class="field">
+                            <span class="label" id="views-label">Can be viewed</span>
+                            <div class="stepper" role="group" aria-labelledby="views-label">
+                                <button type="button" data-step="-1" aria-label="Fewer views">−</button>
+                                <output id="views-output" aria-live="polite">1 time</output>
+                                <button type="button" data-step="1" aria-label="More views">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="toggle"><input type="checkbox" id="passphrase-toggle"> Add a passphrase</label>
+                        <div class="field" id="passphrase-field" hidden>
+                            <label class="sr-only" for="passphrase">Passphrase</label>
+                            <input class="input" type="text" id="passphrase" autocomplete="off" spellcheck="false" placeholder="A passphrase the recipient must type">
+                            <p class="field__hint">Send it through another channel: a call, a text message. Ten wrong attempts destroy the secret.</p>
+                        </div>
+                    </div>
+
+                    <p class="note note--error" id="create-error" role="alert" hidden></p>
+
+                    <button class="btn btn--block" type="submit" id="create-submit">Encrypt &amp; create link</button>
+                </div>
+                <div class="folder__foot">
+                    <span>Need a password from someone? <a href="{{ path('request_new') }}">Request a secret →</a></span>
+                </div>
+            </form>
+
+            {# Résultat, rempli par pages/create.js. #}
+            <section class="folder" id="create-result" hidden aria-live="polite">
+                <span class="tab"><b>●</b> Sealed</span>
+                <div class="folder__body">
+                    <div class="sealed-head">
+                        <h2>Your secret is sealed.</h2>
+                        <span class="stamp stamp--land" aria-hidden="true">Sealed</span>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="share-link">Send this link</label>
+                        <div class="linkbox">
+                            <input id="share-link" type="text" readonly>
+                            <button type="button" data-copy="share-link">Copy</button>
+                        </div>
+                        <p class="field__hint" id="share-summary"></p>
+                        {# Une zone de texte et non un champ : un <input> supprimerait les retours à la ligne. #}
+                        <textarea id="share-message" readonly tabindex="-1" aria-hidden="true" class="sr-only"></textarea>
+                        <button class="btn btn--ghost btn--small" type="button" data-copy="share-message">Copy with instructions</button>
+                    </div>
+                    <p class="note note--warn" id="share-passphrase" hidden><strong>Passphrase protected.</strong> Send the passphrase separately, never in the same message as the link.</p>
+                    <p class="note" id="share-scanner-tip"><strong>Sending to a company inbox?</strong> Email security scanners sometimes open links. Ours can't use up the view, and a passphrase makes it certain: no scanner can type it.</p>
+                    <div class="field">
+                        <label class="label" for="manage-link">Your private tracking link</label>
+                        <div class="linkbox linkbox--quiet">
+                            <input id="manage-link" type="text" readonly>
+                            <button type="button" data-copy="manage-link">Copy</button>
+                        </div>
+                        <p class="field__hint">Keep it for yourself: it shows when the secret is read, and lets you burn it now. It cannot open the secret.</p>
+                    </div>
+                    <button class="btn btn--ghost btn--block" type="button" id="create-again">Share another secret</button>
+                </div>
+            </section>
+        </div>
+    </div>
+    <span class="hero__stamp stamp stamp--big" aria-hidden="true">Read once</span>
+</section>
+
+<section class="section" id="how">
+    <div class="wrap">
+        <div class="section__head">
+            <h2>Three steps, <em>zero trust</em> required.</h2>
+            <p>You don't have to trust us with your secret, because we never have it. Only scrambled bytes reach our servers, and only the person holding the link can turn them back into your secret.</p>
+        </div>
+        <ol class="steps">
+            <li>
+                <span class="num">01 · Write</span>
+                <h3>Paste your secret</h3>
+                <p>A password, a recovery code, an API key, a contract. Attach files if you need to. Choose how long it lives and how many times it can be opened.</p>
+            </li>
+            <li>
+                <span class="num">02 · Seal</span>
+                <h3>Your browser encrypts it</h3>
+                <p>A fresh 256-bit key is generated on your device. The secret is encrypted with AES-256-GCM before anything is sent. We store ciphertext, never the key.</p>
+            </li>
+            <li>
+                <span class="num">03 · Send</span>
+                <h3>The link is the key</h3>
+                <p>The key rides after the <code>#</code> in the link, the part browsers never send to a server. Once read, the secret is wiped from our database.</p>
+            </li>
+        </ol>
+    </div>
+</section>
+
+<section class="section" id="request">
+    <div class="wrap split">
+        <div class="callout">
+            <p class="kicker"><span>Request a secret</span><span>Post-quantum</span></p>
+            <h2>Need a password <em>from</em> a client?</h2>
+            <p>Send them a request link instead of asking them to email it. They type the secret, their browser encrypts it to your key, and only you can open it. The exchange uses X-Wing, a hybrid of ML-KEM-768 and X25519, built to stay safe even against future quantum computers.</p>
+            <a class="btn" href="{{ path('request_new') }}">Request a secret</a>
+        </div>
+        <ol class="flow" aria-label="How a request works">
+            <li><strong>You create a request.</strong> Your browser makes a key pair. The private half stays in your private inbox link.</li>
+            <li><strong>They answer.</strong> Their browser encrypts the secret to your public key. We only relay ciphertext.</li>
+            <li><strong>You open it, once.</strong> Your inbox link decrypts it on your device, then the response is erased.</li>
+        </ol>
+    </div>
+</section>
+
+<section class="section section--dark" id="security">
+    <div class="wrap">
+        <div class="section__head">
+            <h2>Built for people who trust <em>no one</em>. Including us.</h2>
+            <p>Every claim below is checkable: the encryption runs in your browser, in code you can read. <a href="{{ path('security') }}">Read the full specification →</a></p>
+        </div>
+        <table class="spec">
+            <tr><th scope="row">Encryption</th><td><strong>AES-256-GCM</strong>, in your browser (Web Crypto API).</td></tr>
+            <tr><th scope="row">Key</th><td>256 random bits, carried in the link after the <strong>#</strong>, never sent to our servers.</td></tr>
+            <tr><th scope="row">Access proof</th><td>We hand the ciphertext only to a browser that proves it holds the key. Guessing a link gets nothing, not even the encrypted bytes.</td></tr>
+            <tr><th scope="row">Passphrase</th><td>Optional second factor, stretched with <strong>Argon2id</strong> (64 MiB, 3 passes). Ten wrong attempts destroy the secret.</td></tr>
+            <tr><th scope="row">Requests</th><td><strong>X-Wing</strong> hybrid key exchange: ML-KEM-768 (FIPS 203) + X25519. Post-quantum.</td></tr>
+            <tr><th scope="row">Size</th><td>Padded to fixed tiers, so the ciphertext doesn't reveal how long your password is.</td></tr>
+            <tr><th scope="row">Link previews</th><td>Slack, Teams and email scanners can open the link: nothing is used up until a person <strong>presses and holds</strong> Reveal for a second. Scanners click; they don't hold.</td></tr>
+            <tr><th scope="row">Our servers</th><td>No access logs, no IP addresses stored, no third-party scripts, a strict Content Security Policy. Hosted in France.</td></tr>
+        </table>
+    </div>
+</section>
+
+<section class="section" id="compare">
+    <div class="wrap">
+        <div class="section__head">
+            <h2>How it <em>compares</em>.</h2>
+            <p>What you get for free, without creating an account, on the tools people use most to send a password.</p>
+        </div>
+        {% set yes = '<span class="yes">✓<span class="sr-only"> yes</span></span>' %}
+        {% set no = '<span class="no">✗<span class="sr-only"> no</span></span>' %}
+        <div class="compare-wrap">
+            <table class="compare">
+                <thead>
+                    <tr>
+                        <th scope="col">Free, no account</th>
+                        <th scope="col" class="us">secretshare</th>
+                        <th scope="col">onetimesecret</th>
+                        <th scope="col">password.link</th>
+                        <th scope="col">Privnote</th>
+                        <th scope="col">Password Pusher</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><th scope="row">Encrypted in your browser: the server can't read it</th><td class="us">{{ yes|raw }}</td><td>{{ no|raw }} server-side</td><td>{{ yes|raw }}</td><td>{{ yes|raw }}</td><td>{{ no|raw }} server-side</td></tr>
+                    <tr><th scope="row">Choose expiry and number of views</th><td class="us">{{ yes|raw }}</td><td>expiry only</td><td>{{ no|raw }}</td><td>expiry only</td><td>{{ yes|raw }}</td></tr>
+                    <tr><th scope="row">Passphrase</th><td class="us">{{ yes|raw }} Argon2id</td><td>{{ yes|raw }}</td><td>{{ no|raw }}</td><td>{{ yes|raw }}</td><td>{{ yes|raw }}</td></tr>
+                    <tr><th scope="row">Attach files</th><td class="us">{{ yes|raw }} 10 MB</td><td>{{ no|raw }}</td><td>{{ no|raw }}</td><td>{{ no|raw }}</td><td>{{ no|raw }}</td></tr>
+                    <tr><th scope="row">Request a secret from someone</th><td class="us">{{ yes|raw }}</td><td>{{ no|raw }} account</td><td>{{ no|raw }} account</td><td>{{ no|raw }}</td><td><span class="no">?<span class="sr-only"> not documented</span></span></td></tr>
+                    <tr><th scope="row">Post-quantum key exchange for requests</th><td class="us">{{ yes|raw }} X-Wing</td><td>{{ no|raw }}</td><td>{{ no|raw }}</td><td>{{ no|raw }}</td><td>{{ no|raw }}</td></tr>
+                    <tr><th scope="row">No ads</th><td class="us">{{ yes|raw }}</td><td>{{ yes|raw }}</td><td>{{ yes|raw }}</td><td>{{ no|raw }}</td><td>{{ yes|raw }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="compare-note">Checked in October 2026 on each service's own website, documentation and published source code, for anonymous use without an account. “?” means the service does not document it. Paid plans and accounts unlock more on some of them. Spotted a mistake? <a href="{{ path('terms') }}#contact">Tell us</a> and we will fix it.</p>
+    </div>
+</section>
+
+<section class="section" id="faq">
+    <div class="wrap">
+        <div class="section__head">
+            <h2>Questions, <em>answered</em>.</h2>
+            <p>Still unsure? The <a href="{{ path('security') }}">security page</a> describes every step of the encryption.</p>
+        </div>
+        <div class="faq">
+            <details>
+                <summary>Can you read my secrets?</summary>
+                <p>No. Your browser encrypts the secret before sending it, and the key stays in the part of the link after the #, which browsers never send to a server. We only ever hold ciphertext we cannot open.</p>
+            </details>
+            <details>
+                <summary>What if Slack, Teams or Outlook opens the link first?</summary>
+                <p>Nothing is lost. Opening the page reveals nothing and uses up no view. To reveal the secret, a person has to press and hold the button for a second: link previews never run the page, and the email security scanners that do click buttons don't hold them. For complete certainty, add a passphrase: no scanner can type it.</p>
+            </details>
+            <details>
+                <summary>What happens after the secret is read?</summary>
+                <p>On its last allowed view, the ciphertext is deleted from our database in the same transaction that hands it over. What remains until the expiry date is a receipt: when it was read, never what it said.</p>
+            </details>
+            <details>
+                <summary>How do I know the secret was received?</summary>
+                <p>When you create a secret, you get a private tracking link. It shows whether and when the secret was opened, and lets you burn it early. No account needed.</p>
+            </details>
+            <details>
+                <summary>Why add a passphrase?</summary>
+                <p>If the link leaks, say in a forwarded email, the passphrase still protects the secret. Send it through a different channel. Ten wrong guesses destroy the secret, so it can't be brute-forced.</p>
+            </details>
+            <details>
+                <summary>What does "post-quantum" mean here?</summary>
+                <p>Secret links use AES-256 with a key that never travels over the network, which is already considered safe against quantum computers. Requests are different: they rely on public-key cryptography, which future quantum computers could break. That's why requests use X-Wing, which combines the new ML-KEM-768 standard with classic X25519.</p>
+            </details>
+            <details>
+                <summary>Is it really free?</summary>
+                <p>Yes. No account, no ads, no trial. Sharing and requesting secrets is free.</p>
+            </details>
+            <details>
+                <summary>Who runs secretshare?</summary>
+                <p>Kiora, a software company based in Puteaux, France. The servers are ours and they are in France. See the <a href="{{ path('terms') }}">legal notice</a>.</p>
+            </details>
+        </div>
+    </div>
+</section>
+{% endblock %}

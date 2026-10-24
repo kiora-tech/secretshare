@@ -1,0 +1,83 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Security: how secretshare encrypts your secrets{% endblock %}
+{% block description %}The full specification: AES-256-GCM in the browser, key in the URL fragment, HKDF access proof, Argon2id passphrases, X-Wing post-quantum requests, and what our servers store.{% endblock %}
+
+{% block body %}
+<article class="wrap prose">
+    <p class="kicker"><span>Specification</span><span>Version 1</span></p>
+    <h1>How secretshare protects a secret.</h1>
+    <p>This page describes exactly what the code does. The encryption runs in your browser. Our own code is served as plain, unminified JavaScript modules that you can read from the page itself; the two cryptographic libraries, <code>@noble/post-quantum</code> and <code>hash-wasm</code>, are their published builds. If this page and the code ever disagree, the code is the truth, and that's a bug we want to hear about.</p>
+
+    <h2>The threat we design for</h2>
+    <p>Assume our server is compromised, or that someone with access to it is curious. That person must not be able to read your secrets, now or later. They will see that a secret exists, its approximate size, when it was created and read. They will not see what it says, who sent it, or who it was for.</p>
+    <p>What we cannot protect against: a compromised device on either end, someone who obtains the full link, or a malicious change to the code we serve you. That last risk is why the code is kept small, readable, and loads nothing from third parties.</p>
+
+    <h2>Sharing a secret</h2>
+    <h3>1 · Keys</h3>
+    <p>Your browser draws three random values with <code>crypto.getRandomValues</code>: an identifier (128 bits), a <strong>link key K</strong> (256 bits) and a <strong>tracking token M</strong> (256 bits).</p>
+    <pre>IKM      = K                       (no passphrase)
+IKM      = K ‖ Argon2id(passphrase) (with a passphrase)
+salt     = "secretshare/v1/secret/" + id
+encKey   = HKDF-SHA256(IKM, salt, info = "enc")   → 256-bit AES key
+authKey  = HKDF-SHA256(IKM, salt, info = "auth")  → 256-bit access proof
+linkKey  = HKDF-SHA256(K,   salt, info = "link")  → link proof (passphrase only)</pre>
+
+    <h3>2 · Encryption</h3>
+    <p>The text and files are packed together, then <strong>padded</strong> to 4 KB, or to the next 64 KB step for larger content, so the size of the ciphertext does not reveal the length of a password. The result is encrypted with <strong>AES-256-GCM</strong> through the browser's Web Crypto API, with a fresh 96-bit IV and the salt above as additional authenticated data, which binds the ciphertext to its identifier.</p>
+    <pre>ciphertext = 0x01 ‖ IV ‖ AES-256-GCM(encKey, IV, padded payload, AAD = salt)</pre>
+
+    <h3>3 · What is sent to us</h3>
+    <p>The identifier, the ciphertext, <code>SHA-256(authKey)</code>, <code>SHA-256(M)</code>, with a passphrase <code>SHA-256(linkKey)</code>, the expiry and the number of views. Never K, never M, never the passphrase, never the plaintext.</p>
+
+    <h3>4 · The link</h3>
+    <pre>https://secretshare.co/s/&lt;id&gt;#&lt;K&gt;</pre>
+    <p>K lives in the fragment, the part after <code>#</code>. Browsers do not send the fragment to the server: it never appears in our requests, and we do not keep access logs in any case.</p>
+
+    <h3>5 · Opening it</h3>
+    <p>Loading the page only asks whether the secret still exists. Nothing is consumed until someone <strong>presses and holds Reveal</strong> for about a second. Link previews in Slack or Teams never run the page; some email security scanners do run it and click buttons, but a click alone does nothing here. After the hold, the browser derives authKey and sends it. The server compares its SHA-256 with the stored hash. Only on a match does it return the ciphertext, and, on the last allowed view, it deletes the ciphertext in the same database transaction. The browser then decrypts locally and removes K from the address bar.</p>
+    <p>This access proof means that an identifier alone is worthless: without K, you don't even get the encrypted bytes, so they cannot be attacked offline. Without a passphrase, a wrong proof is simply refused and not counted, since K has 256 bits. An identifier is also never reused: when an expired record is erased, a SHA-256 fingerprint of its identifier is kept, so an old link can never be pointed at new content.</p>
+
+    <h3>6 · Passphrases</h3>
+    <p>An optional passphrase is stretched with <strong>Argon2id</strong>: 64 MiB of memory, 3 passes, parallelism 1, a random 16-byte salt, computed in your browser. Its output enters the key derivation above, so the right passphrase is needed both to obtain the ciphertext and to decrypt it. Each wrong passphrase is counted on the server, and the <strong>tenth wrong attempt destroys the secret</strong>. Only someone who holds the link can spend those attempts: the browser also sends the link proof, derived from K alone, and the server checks it first. Without it, nothing is compared and nothing is counted.</p>
+
+    <h3>7 · Tracking without an account</h3>
+    <p>The tracking link <code>/m/&lt;id&gt;#&lt;M&gt;</code> proves knowledge of M to see read times or burn the secret. It cannot decrypt anything: M and K are independent.</p>
+
+    <h2>Requesting a secret: post-quantum</h2>
+    <p>A request reverses the direction: someone sends a secret to you. That needs public-key cryptography, and that is where quantum computers matter: data recorded today could be decrypted once large quantum computers exist. Requests therefore use <strong>X-Wing</strong>, a hybrid key encapsulation that combines <strong>ML-KEM-768</strong> (NIST FIPS 203) with <strong>X25519</strong>. It stays secure as long as either one holds.</p>
+    <pre>(pk, sk)   = X-Wing.keygen()                      sk: 32 bytes, stays with you
+R          = 32 random bytes
+note       = AES-256-GCM(HKDF(R, "note"), your note, AAD = label ‖ SHA-256(pk))
+respond    = HKDF(R, "respond")                   the server keeps SHA-256(respond)
+request    = https://secretshare.co/r/&lt;id&gt;#&lt;R&gt;     → send it
+inbox      = https://secretshare.co/i/&lt;id&gt;#&lt;sk&gt;    → keep it
+
+(ct, ss)   = X-Wing.encapsulate(pk)                on their side
+answer     = AES-256-GCM(HKDF(ss, "enc"), payload)
+ss         = X-Wing.decapsulate(ct, sk)            on your side</pre>
+    <p>Because the note's authenticated data includes the hash of the public key, a server that swapped in its own public key would make the note impossible to decrypt, and the page refuses to send anything. Answering requires the proof derived from R: someone who only knows the identifier cannot take the place of the person you asked. The inbox shows whether an answer is waiting without opening it; the answer is opened only after you press and hold, returned once, then erased.</p>
+    <p>Secret links themselves involve no public-key exchange: AES-256 with a 256-bit key that never travels over the network is already considered safe against quantum attacks.</p>
+    <p>The X-Wing implementation is <code>@noble/post-quantum</code> by Paul Miller (MIT license). It has been self-audited by its author, not yet by an independent firm.</p>
+
+    <h2>What our servers keep</h2>
+    <table>
+        <tr><th>Kept</th><td>Ciphertext (until read or expired), the SHA-256 hashes listed above, the Argon2id salt and settings, size, creation and expiry dates, read timestamps. After a record is erased: a SHA-256 fingerprint of its identifier, so the link can never be reused.</td></tr>
+        <tr><th>Never kept</th><td>Plaintext, keys, passphrases, IP addresses, cookies, access logs.</td></tr>
+        <tr><th>Deleted</th><td>Ciphertext: at the last allowed view, or when burned. The whole record: at its expiry date, checked every five minutes.</td></tr>
+        <tr><th>Abuse limits</th><td>Requests and uploaded volume are counted per IP address (per /64 network for IPv6) for up to two hours, under a keyed hash (HMAC) of the address, never the address itself. Expired counters are erased every five minutes. Requests sent by other websites are refused before they are counted.</td></tr>
+    </table>
+
+    <h2>Browser hardening</h2>
+    <ul>
+        <li>A strict Content Security Policy: scripts only from our domain, each inline script authorized by a per-request nonce, no connections to other origins.</li>
+        <li>No third-party scripts, fonts or analytics on any page. Visit counts go through our own server and contain only a page template, like <code>/s</code>, never an identifier or a key.</li>
+        <li><code>Referrer-Policy: no-referrer</code>, framing forbidden, cross-origin isolation headers, HTTPS only.</li>
+        <li>Decrypted attachments are always offered as downloads. Only inert types (images, PDF, plain text) keep their type; anything else, such as HTML or SVG, is saved as a plain file and never opened as a page of this site.</li>
+        <li>Hosted on Kiora's own servers in France, behind TLS that negotiates the post-quantum X25519MLKEM768 key exchange with modern browsers.</li>
+    </ul>
+
+    <h2>Report a vulnerability</h2>
+    <p>Write to <a href="mailto:contact@secretshare.co">contact@secretshare.co</a>. We answer every report and credit researchers who wish to be named.</p>
+</article>
+{% endblock %}

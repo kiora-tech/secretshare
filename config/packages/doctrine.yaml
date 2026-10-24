@@ -1,0 +1,12 @@
+# DBAL seul, sans ORM : la lecture unique d'un secret est une transaction SQL explicite
+# (SELECT … FOR UPDATE puis UPDATE), plus lisible en SQL qu'à travers des entités.
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+        profiling_collect_backtrace: '%kernel.debug%'
+
+when@test:
+    doctrine:
+        dbal:
+            # "TEST_TOKEN" is typically set by ParaTest
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'

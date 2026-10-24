@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Privacy policy · secretshare{% endblock %}
+{% block description %}What secretshare stores, for how long, and what it never sees: no account, no cookies, no IP addresses, no access logs.{% endblock %}
+
+{% block body %}
+<article class="wrap prose">
+    <p class="kicker"><span>Privacy</span><span>Last updated October 24, 2026</span></p>
+    <h1>Privacy policy.</h1>
+    <p>secretshare is built so that we hold as little as possible about you, and nothing readable about your secrets. This policy explains what that leaves.</p>
+
+    <h2>Who is responsible</h2>
+    <p>KIORA SARL, 58 avenue des Bergères, 92800 Puteaux, France (RCS Nanterre 850 361 999), is the data controller. Contact: <a href="mailto:contact@secretshare.co">contact@secretshare.co</a>.</p>
+
+    <h2>Your secrets</h2>
+    <p>Secrets, files and requests are encrypted in your browser before they reach us. We store the encrypted data, which we cannot decrypt, together with technical data needed to run the service: a random identifier, hashes used to check access, the Argon2id salt when a passphrase is used, the size, the creation and expiry dates, and the times the secret was opened. The <a href="{{ path('security') }}">security page</a> lists each item.</p>
+    <p>The encrypted data is deleted when the secret is read for the last allowed time, when its sender burns it, or at the latest at its expiry date. The remaining record is deleted at the expiry date. The longest possible lifetime is 30 days. After that, we keep only an irreversible fingerprint (SHA-256) of the random identifier, so that the same link can never be reused for other content.</p>
+
+    <h2>No account, no cookies</h2>
+    <p>There is no account and no sign-in. The site sets no cookies and uses no local storage for tracking.</p>
+
+    <h2>IP addresses and logs</h2>
+    <p>Our web servers keep no access logs. To stop abuse, the number of requests and the volume uploaded from an IP address (for IPv6, from its /64 network) are counted for up to two hours. The counter is stored under a keyed hash of the address, never the address itself, and expired counters are erased every five minutes. Error logs may record the identifier of a link involved in an error, never its key.</p>
+
+    <h2>Visit statistics</h2>
+    <p>We count visits with Plausible Analytics, hosted on our own servers. No script is loaded from another site: your browser tells our server which kind of page was viewed (for example "a secret page", never which secret), the site you came from (its domain only) and any campaign tags (<code>utm_</code>) in the address. Our server forwards that, with your browser's user agent and IP address, to our Plausible instance, which turns them into a daily anonymous count and does not store the IP address. No cookie is used.</p>
+
+    <h2>Hosting and transfers</h2>
+    <p>The service runs on servers operated by Kiora in France. Your data is not transferred outside the European Union, and we do not sell or share it.</p>
+
+    <h2>Legal basis and your rights</h2>
+    <p>We process this data to provide the service you ask for (GDPR, Article 6(1)(b)) and, for abuse limits and statistics, on our legitimate interest in keeping the service available and improving it (Article 6(1)(f)). Since we don't know who you are, we usually can't link data to you; if you think we hold personal data about you, write to us and we will answer within one month. You can also complain to the CNIL (cnil.fr).</p>
+
+    <h2>Changes</h2>
+    <p>If this policy changes, the date at the top changes too.</p>
+</article>
+{% endblock %}
